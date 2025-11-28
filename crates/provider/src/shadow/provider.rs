@@ -47,7 +47,7 @@ where
                 prefix_with_full_path: true,
                 use_default_ports_in_cmd: false,
             },
-            tmp_dir: std::env::temp_dir(),
+            tmp_dir: std::env::temp_dir().canonicalize().unwrap_or_else(|_| std::env::temp_dir()),
             filesystem,
             namespaces: RwLock::new(HashMap::new()),
             agent_port,
@@ -55,7 +55,8 @@ where
     }
 
     pub fn tmp_dir(mut self, tmp_dir: impl Into<PathBuf>) -> Self {
-        self.tmp_dir = tmp_dir.into();
+        let path = tmp_dir.into();
+        self.tmp_dir = path.canonicalize().unwrap_or(path);
         self
     }
 }

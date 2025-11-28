@@ -238,13 +238,19 @@ where
         // If exact IP is needed, we could resolve `self.name`
         // For now, return a placeholder or resolve via standard library
         // since we are IN the simulation.
-        let addr = tokio::net::lookup_host(format!("{}:0", self.name))
+        let addrs = tokio::net::lookup_host(format!("{}:0", self.name))
             .await
-            .map_err(|e| ProviderError::InvalidConfig(format!("Failed to resolve host {}: {}", self.name, e)))?
-            .next()
-            .ok_or_else(|| ProviderError::InvalidConfig("No IP found".into()))?
-            .ip();
-        Ok(addr)
+            .map_err(|e| ProviderError::InvalidConfig(format!("Failed to resolve host {}: {}", self.name, e)))?;
+
+        for addr in addrs {
+            if let IpAddr::V4(ipv4) = addr.ip() {
+                if ipv4.octets()[0] == 10 {
+                    return Ok(IpAddr::V4(ipv4));
+                }
+            }
+        }
+        
+        Err(ProviderError::InvalidConfig(format!("No 10.x.x.x IP found for {}", self.name)))
     }
 
     async fn pause(&self) -> Result<(), ProviderError> {
