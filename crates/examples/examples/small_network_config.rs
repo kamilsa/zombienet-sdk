@@ -1,12 +1,18 @@
-use zombienet_sdk::NetworkConfigBuilder;
+use zombienet_sdk::{NetworkConfigBuilder, NetworkConfigExt};
 
-fn main() {
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
     let config = NetworkConfigBuilder::new()
         .with_relaychain(|r| {
             r.with_chain("rococo-local")
                 .with_validator(|node| node.with_name("alice").with_command("polkadot"))
         })
-        .build();
+        .build()
+        .map_err(|e| anyhow::anyhow!("Config build errors: {:?}", e))?;
 
-    println!("{:?}", config.unwrap());
+    let _network = config.spawn_shadow().await?;
+
+    println!("Shadow network spawned!");
+
+    Ok(())
 }

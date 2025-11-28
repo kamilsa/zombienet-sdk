@@ -18,7 +18,7 @@ pub mod tx_helper {
     };
 }
 
-use provider::{DockerProvider, KubernetesProvider, NativeProvider};
+use provider::{DockerProvider, KubernetesProvider, NativeProvider, ShadowProvider};
 pub use support::fs::local::LocalFileSystem;
 
 pub mod environment;
@@ -45,6 +45,7 @@ pub trait NetworkConfigExt {
     async fn spawn_native(self) -> Result<Network<LocalFileSystem>, OrchestratorError>;
     async fn spawn_k8s(self) -> Result<Network<LocalFileSystem>, OrchestratorError>;
     async fn spawn_docker(self) -> Result<Network<LocalFileSystem>, OrchestratorError>;
+    async fn spawn_shadow(self) -> Result<Network<LocalFileSystem>, OrchestratorError>;
 }
 
 #[async_trait]
@@ -91,6 +92,13 @@ impl NetworkConfigExt for NetworkConfig {
     async fn spawn_docker(self) -> Result<Network<LocalFileSystem>, OrchestratorError> {
         let filesystem = LocalFileSystem;
         let provider = DockerProvider::new(filesystem.clone()).await;
+        let orchestrator = Orchestrator::new(filesystem, provider);
+        orchestrator.spawn(self).await
+    }
+
+    async fn spawn_shadow(self) -> Result<Network<LocalFileSystem>, OrchestratorError> {
+        let filesystem = LocalFileSystem;
+        let provider = ShadowProvider::new(filesystem.clone());
         let orchestrator = Orchestrator::new(filesystem, provider);
         orchestrator.spawn(self).await
     }
