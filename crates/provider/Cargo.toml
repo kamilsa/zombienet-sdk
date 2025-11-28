@@ -36,7 +36,8 @@ tar = { workspace = true }
 sha2 = { workspace = true }
 hex = { workspace = true }
 tracing = { workspace = true }
-reqwest = { workspace = true }
+reqwest = { workspace = true, features = ["json"] }
+base64 = "0.22"
 regex = { workspace = true }
 url = { workspace = true }
 flate2 = { workspace = true }

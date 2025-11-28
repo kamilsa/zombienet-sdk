@@ -2,6 +2,7 @@
 mod docker;
 mod kubernetes;
 mod native;
+mod shadow;
 pub mod shared;
 
 use std::{
@@ -260,5 +261,6 @@ pub type DynNode = Arc<dyn ProviderNode + Send + Sync>;
 pub use docker::*;
 pub use kubernetes::*;
 pub use native::*;
+pub use shadow::*;
 pub use shared::{constants, types};
 use tracing::warn;
