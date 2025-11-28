@@ -19,6 +19,7 @@ pub enum Provider {
     Native,
     K8s,
     Docker,
+    Shadow,
 }
 
 impl Provider {
@@ -29,6 +30,7 @@ impl Provider {
             Provider::Native => NetworkConfigExt::spawn_native,
             Provider::K8s => NetworkConfigExt::spawn_k8s,
             Provider::Docker => NetworkConfigExt::spawn_docker,
+            Provider::Shadow => NetworkConfigExt::spawn_shadow,
         }
     }
 }
@@ -39,6 +41,7 @@ impl From<String> for Provider {
         match value.to_ascii_lowercase().as_ref() {
             "native" => Provider::Native,
             "k8s" => Provider::K8s,
+            "shadow" => Provider::Shadow,
             _ => Provider::Docker, // default provider
         }
     }
@@ -62,6 +65,7 @@ pub fn get_spawn_fn() -> fn(NetworkConfig) -> Pin<Box<dyn Future<Output = SpawnR
         Provider::Native => NetworkConfigExt::spawn_native,
         Provider::K8s => NetworkConfigExt::spawn_k8s,
         Provider::Docker => NetworkConfigExt::spawn_docker,
+        Provider::Shadow => NetworkConfigExt::spawn_shadow,
     }
 }
 
@@ -74,5 +78,6 @@ pub fn get_attach_fn() -> fn(PathBuf) -> Pin<Box<dyn Future<Output = AttachResul
         Provider::Native => AttachToLiveNetwork::attach_native,
         Provider::K8s => AttachToLiveNetwork::attach_k8s,
         Provider::Docker => AttachToLiveNetwork::attach_docker,
+        Provider::Shadow => AttachToLiveNetwork::attach_shadow,
     }
 }

@@ -71,6 +71,9 @@ pub trait AttachToLive {
     async fn attach_docker(
         zombie_json_path: PathBuf,
     ) -> Result<Network<LocalFileSystem>, OrchestratorError>;
+    async fn attach_shadow(
+        zombie_json_path: PathBuf,
+    ) -> Result<Network<LocalFileSystem>, OrchestratorError>;
 }
 
 #[async_trait]
@@ -131,6 +134,15 @@ impl AttachToLive for AttachToLiveNetwork {
     ) -> Result<Network<LocalFileSystem>, OrchestratorError> {
         let filesystem = LocalFileSystem;
         let provider = DockerProvider::new(filesystem.clone()).await;
+        let orchestrator = Orchestrator::new(filesystem, provider);
+        orchestrator.attach_to_live(zombie_json_path.as_ref()).await
+    }
+
+    async fn attach_shadow(
+        zombie_json_path: PathBuf,
+    ) -> Result<Network<LocalFileSystem>, OrchestratorError> {
+        let filesystem = LocalFileSystem;
+        let provider = ShadowProvider::new(filesystem.clone());
         let orchestrator = Orchestrator::new(filesystem, provider);
         orchestrator.attach_to_live(zombie_json_path.as_ref()).await
     }
