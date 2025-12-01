@@ -33,6 +33,7 @@ where
     pub(super) created_paths: &'a [PathBuf],
     pub(super) filesystem: &'a FS,
     pub(super) node_log_path: Option<&'a PathBuf>,
+    pub(super) agent_host: Option<String>,
     pub(super) agent_port: u16,
 }
 
@@ -86,7 +87,11 @@ where
             .cloned()
             .unwrap_or_else(|| base_dir.join(format!("{}.log", options.name)));
 
-        let client = ShadowAgentClient::new(options.name, options.agent_port);
+        let agent_host = options
+            .agent_host
+            .clone()
+            .unwrap_or_else(|| options.name.to_string());
+        let client = ShadowAgentClient::new(&agent_host, options.agent_port);
 
         let node = Arc::new(ShadowNode {
             _namespace: options.namespace.clone(),
@@ -108,13 +113,20 @@ where
         // Initialize node via Agent
         // 1. Create directories
         for path in options.created_paths {
-             let _ = node.run_command(RunCommandOptions::new("mkdir").args(vec!["-p", &path.to_string_lossy()])).await?;
+            let _ = node
+                .run_command(
+                    RunCommandOptions::new("mkdir")
+                        .args(vec!["-p", &path.to_string_lossy()]),
+                )
+                .await?;
         }
 
         // 2. Transfer files (via agent or assuming shared FS if properly mounted in shadow.yaml)
         // For strict Shadow simulation without shared FS, we'd POST the file content to the Agent.
         for file in options.startup_files {
-            node.send_file(&file.local_path, &file.remote_path, &file.mode).await?;
+            node
+                .send_file(&file.local_path, &file.remote_path, &file.mode)
+                .await?;
         }
 
         // 3. Start the process

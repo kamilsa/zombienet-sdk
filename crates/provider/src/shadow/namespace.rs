@@ -31,6 +31,7 @@ where
     capabilities: ProviderCapabilities,
     filesystem: FS,
     pub(super) nodes: RwLock<HashMap<String, Arc<ShadowNode<FS>>>>,
+    agent_host: Option<String>,
     agent_port: u16,
 }
 
@@ -44,6 +45,7 @@ where
         capabilities: &ProviderCapabilities,
         filesystem: &FS,
         custom_base_dir: Option<&Path>,
+        agent_host: Option<String>,
         agent_port: u16,
     ) -> Result<Arc<Self>, ProviderError> {
         let name = format!("{}{}", NAMESPACE_PREFIX, Uuid::new_v4());
@@ -71,6 +73,7 @@ where
             capabilities: capabilities.clone(),
             filesystem: filesystem.clone(),
             nodes: RwLock::new(HashMap::new()),
+            agent_host,
             agent_port,
         }))
     }
@@ -81,6 +84,7 @@ where
         filesystem: &FS,
         custom_base_dir: &Path,
         name: &str,
+        agent_host: Option<String>,
         agent_port: u16,
     ) -> Result<Arc<Self>, ProviderError> {
         let base_dir = custom_base_dir.to_path_buf();
@@ -93,6 +97,7 @@ where
             capabilities: capabilities.clone(),
             filesystem: filesystem.clone(),
             nodes: RwLock::new(HashMap::new()),
+            agent_host,
             agent_port,
         }))
     }
@@ -154,6 +159,7 @@ where
             created_paths: &options.created_paths,
             filesystem: &self.filesystem,
             node_log_path: options.node_log_path.as_ref(),
+            agent_host: self.agent_host.clone(),
             agent_port: self.agent_port,
         })
         .await?;

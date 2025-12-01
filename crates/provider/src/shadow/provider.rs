@@ -25,7 +25,8 @@ where
     tmp_dir: PathBuf,
     filesystem: FS,
     pub(super) namespaces: RwLock<HashMap<String, Arc<ShadowNamespace<FS>>>>,
-    // Configuration for the Shadow Agent (e.g., port)
+    // Configuration for the Shadow Agent (host + port)
+    pub(super) agent_host: Option<String>,
     pub(super) agent_port: u16,
 }
 
@@ -38,6 +39,7 @@ where
             .unwrap_or_else(|_| "3000".to_string())
             .parse::<u16>()
             .expect("Invalid ZOMBIENET_SHADOW_AGENT_PORT");
+        let agent_host = std::env::var("ZOMBIENET_SHADOW_AGENT_HOST").ok();
 
         Arc::new_cyclic(|weak| ShadowProvider {
             weak: weak.clone(),
@@ -50,6 +52,7 @@ where
             tmp_dir: std::env::temp_dir().canonicalize().unwrap_or_else(|_| std::env::temp_dir()),
             filesystem,
             namespaces: RwLock::new(HashMap::new()),
+            agent_host,
             agent_port,
         })
     }
@@ -90,6 +93,7 @@ where
             &self.capabilities,
             &self.filesystem,
             None,
+            self.agent_host.clone(),
             self.agent_port,
         )
         .await?;
@@ -112,6 +116,7 @@ where
             &self.capabilities,
             &self.filesystem,
             Some(base_dir),
+            self.agent_host.clone(),
             self.agent_port,
         )
         .await?;
@@ -138,6 +143,7 @@ where
             &self.filesystem,
             &base_dir,
             &name,
+            self.agent_host.clone(),
             self.agent_port,
         )
         .await?;
