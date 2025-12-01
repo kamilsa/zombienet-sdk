@@ -113,6 +113,7 @@ where
         // Initialize node via Agent
         // 1. Create directories
         for path in options.created_paths {
+            tracing::debug!(target: "zombienet_provider::shadow", node = %options.name, remote_path = %path.display(), "creating remote path via agent");
             let _ = node
                 .run_command(
                     RunCommandOptions::new("mkdir")
@@ -124,6 +125,7 @@ where
         // 2. Transfer files (via agent or assuming shared FS if properly mounted in shadow.yaml)
         // For strict Shadow simulation without shared FS, we'd POST the file content to the Agent.
         for file in options.startup_files {
+            tracing::debug!(target: "zombienet_provider::shadow", node = %options.name, local = %file.local_path.display(), remote = %file.remote_path.display(), "uploading startup file");
             node
                 .send_file(&file.local_path, &file.remote_path, &file.mode)
                 .await?;
@@ -230,7 +232,14 @@ where
         mode: &str,
     ) -> Result<(), ProviderError> {
         // Read local file
-        let content = self.filesystem.read(local_file_path).await?;
+        let content = self
+            .filesystem
+            .read(local_file_path)
+            .await
+            .map_err(|err| {
+                tracing::error!(target: "zombienet_provider::shadow", node = %self.name, local = %local_file_path.display(), remote = %remote_file_path.display(), "failed to read local file: {err}");
+                err
+            })?;
         self.client.upload_file(remote_file_path, &content, mode)
             .await
             .map_err(|e| ProviderError::SendFile(self.name.clone(), remote_file_path.to_string_lossy().to_string(), e))
